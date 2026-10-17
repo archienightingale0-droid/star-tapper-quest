@@ -78,6 +78,7 @@ function Game() {
       if (name) {
         setNewStar(name);
         playEvolve();
+        setTimeout(() => setNewStar(null), 4000);
       }
     }
     prevTier.current = t;
