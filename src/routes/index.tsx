@@ -104,14 +104,19 @@ function Game() {
           <div className="text-muted-foreground">stardust · {fmt(cps)}/sec · +{fmt(perClick)}/tap</div>
         </div>
         <button onClick={tap} aria-label="Tap the star" className="orb relative grid h-64 w-64 place-items-center text-[11rem] leading-none">
-          <span className="spin-slow">⭐</span>
+          <span className="spin-slow">{STARS[tier].emoji}</span>
           {floaters.map((f) => (
             <span key={f.id} className="floater absolute text-2xl font-bold text-primary" style={{ left: f.x, top: f.y }}>
               +{fmt(f.v)}
             </span>
           ))}
         </button>
-        <button onClick={() => confirm("Reset all progress?") && setS({ dust: 0, owned: {} })} className="text-sm text-muted-foreground underline">
+        <div className="text-sm text-muted-foreground">
+          {STARS[tier].name}
+          {tier < STARS.length - 1 && <> · {taps % 100}/100 to next star</>}
+        </div>
+        {newStar && <div className="text-lg font-bold text-accent">✨ Evolved into a {newStar}!</div>}
+        <button onClick={() => confirm("Reset all progress?") && setS({ dust: 0, owned: {}, taps: 0 })} className="text-sm text-muted-foreground underline">
           Reset
         </button>
       </section>

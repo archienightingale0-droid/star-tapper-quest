@@ -56,3 +56,10 @@ export function playBuy(tier = 0) {
 export function playFail() {
   tone(160, 0.12, "square", 0.04, 0, 90);
 }
+
+/** Big fanfare when the star evolves every 100 taps. */
+export function playEvolve() {
+  const root = 523; // C5
+  [1, 1.25, 1.5, 2].forEach((m, i) => tone(root * m, 0.18, "triangle", 0.12, i * 0.1));
+  tone(root * 2, 0.5, "sine", 0.08, 0.4);
+}
