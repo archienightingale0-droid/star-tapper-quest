@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { playBuy, playTap } from "@/lib/sounds";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,6 +38,8 @@ function Game() {
   const [s, setS] = useState<Save>({ dust: 0, owned: {} });
   const [floaters, setFloaters] = useState<{ id: number; x: number; y: number; v: number }[]>([]);
   const loaded = useRef(false);
+  const tapPitch = useRef(0);
+  const pitchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const perClick = 1 + UPGRADES.reduce((a, u) => a + u.click * (s.owned[u.id] ?? 0), 0);
   const cps = UPGRADES.reduce((a, u) => a + u.cps * (s.owned[u.id] ?? 0), 0);
@@ -57,11 +60,16 @@ function Game() {
     setFloaters((f) => [...f.slice(-20), { id, x: e.clientX - r.left, y: e.clientY - r.top, v: perClick }]);
     setTimeout(() => setFloaters((f) => f.filter((x) => x.id !== id)), 900);
     setS((p) => ({ ...p, dust: p.dust + perClick }));
+    playTap(tapPitch.current);
+    if (pitchTimer.current) clearTimeout(pitchTimer.current);
+    tapPitch.current = Math.min(tapPitch.current + 1, 8);
+    pitchTimer.current = setTimeout(() => (tapPitch.current = 0), 1200);
   };
   const buy = (u: Upgrade) => {
     const n = s.owned[u.id] ?? 0, c = cost(u, n);
     if (s.dust < c) return;
     setS((p) => ({ dust: p.dust - c, owned: { ...p.owned, [u.id]: n + 1 } }));
+    playBuy(UPGRADES.findIndex((x) => x.id === u.id));
   };
 
   return (
