@@ -31,12 +31,27 @@ const fmt = (n: number) =>
     : n < 1e6 ? (n / 1e3).toFixed(1) + "K"
     : n < 1e9 ? (n / 1e6).toFixed(2) + "M" : (n / 1e9).toFixed(2) + "B";
 
-type Save = { dust: number; owned: Record<string, number> };
+const STARS = [
+  { emoji: "⭐", name: "Star" },
+  { emoji: "🌟", name: "Glowing Star" },
+  { emoji: "✨", name: "Sparkle Star" },
+  { emoji: "💫", name: "Dizzy Star" },
+  { emoji: "🌠", name: "Shooting Star" },
+  { emoji: "☄️", name: "Comet" },
+  { emoji: "☀️", name: "Sun" },
+  { emoji: "🪐", name: "Ringed Planet" },
+  { emoji: "🌌", name: "Galaxy" },
+  { emoji: "🕳️", name: "Black Hole" },
+];
+const starTier = (taps: number) => Math.min(Math.floor(taps / 100), STARS.length - 1);
+
+type Save = { dust: number; owned: Record<string, number>; taps: number };
 const KEY = "star-tapper-save";
 
 function Game() {
-  const [s, setS] = useState<Save>({ dust: 0, owned: {} });
+  const [s, setS] = useState<Save>({ dust: 0, owned: {}, taps: 0 });
   const [floaters, setFloaters] = useState<{ id: number; x: number; y: number; v: number }[]>([]);
+  const [newStar, setNewStar] = useState<string | null>(null);
   const loaded = useRef(false);
   const tapPitch = useRef(0);
   const pitchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,7 +60,7 @@ function Game() {
   const cps = UPGRADES.reduce((a, u) => a + u.cps * (s.owned[u.id] ?? 0), 0);
 
   useEffect(() => {
-    try { const r = localStorage.getItem(KEY); if (r) setS(JSON.parse(r)); } catch {}
+    try { const r = localStorage.getItem(KEY); if (r) setS({ dust: 0, owned: {}, taps: 0, ...JSON.parse(r) }); } catch {}
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(s)); }, [s]);
