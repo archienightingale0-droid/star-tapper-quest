@@ -123,7 +123,7 @@ function Game() {
               <div className="star-sparks">
                 {Array.from({ length: 6 }, (_, i) => (
                   <span key={i} style={{ transform: `rotate(${i * 60}deg) translateY(-150px)` }}>
-                    ✨
+                    ✦
                   </span>
                 ))}
               </div>
