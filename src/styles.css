@@ -53,56 +53,35 @@
 .spin-slow { animation: spin 40s linear infinite; }
 
 .upgrade-play-area { aspect-ratio: 1; isolation: isolate; }
-.upgrade-travel-layer { pointer-events: none; }
-.upgrade-orbit {
+.star-effect-layer { pointer-events: none; }
+.star-aura {
   position: absolute;
-  inset: 24px;
-  animation: upgrade-orbit 16s linear infinite;
+  inset: 16px;
+  border-radius: 50%;
+  opacity: var(--aura-o, 0);
+  background: radial-gradient(circle, transparent 52%, oklch(0.85 0.17 85 / 0.45) 68%, transparent 78%);
+  filter: blur(10px);
+  animation: aura-pulse 2.2s ease-in-out infinite;
 }
-.upgrade-traveler {
+@keyframes aura-pulse {
+  0%, 100% { transform: scale(0.92); }
+  50% { transform: scale(1.06); }
+}
+.star-sparks {
   position: absolute;
-  top: 0;
+  inset: 0;
+  opacity: var(--aura-o, 0);
+  animation: spin 14s linear infinite;
+}
+.star-sparks span {
+  position: absolute;
+  top: 50%;
   left: 50%;
-  width: 44px;
-  height: 44px;
-  margin-left: -22px;
-  display: grid;
-  place-items: center;
-  animation: upgrade-upright 16s linear infinite;
+  margin: -11px;
+  font-size: 20px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px oklch(0.85 0.17 85 / 0.8));
 }
-.upgrade-character { font-size: 32px; line-height: 1; }
-.upgrade-count {
-  position: absolute;
-  right: -4px;
-  bottom: -2px;
-  min-width: 20px;
-  padding: 1px 4px;
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--accent);
-  border: 1px solid var(--border);
-  text-align: center;
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 600;
-}
-.upgrade-orbit-1, .upgrade-orbit-1 .upgrade-traveler { animation-delay: -3s; }
-.upgrade-orbit-2, .upgrade-orbit-2 .upgrade-traveler { animation-delay: -6s; }
-.upgrade-orbit-3, .upgrade-orbit-3 .upgrade-traveler { animation-delay: -9s; }
-.upgrade-orbit-4, .upgrade-orbit-4 .upgrade-traveler { animation-delay: -12s; }
-.upgrade-orbit-5, .upgrade-orbit-5 .upgrade-traveler { animation-delay: -14s; }
-@keyframes upgrade-orbit { to { transform: rotate(360deg); } }
-@keyframes upgrade-upright { to { transform: rotate(-360deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .upgrade-orbit, .upgrade-traveler, .spin-slow { animation: none; }
-  .upgrade-orbit-1 { transform: rotate(60deg); }
-  .upgrade-orbit-2 { transform: rotate(120deg); }
-  .upgrade-orbit-3 { transform: rotate(180deg); }
-  .upgrade-orbit-4 { transform: rotate(240deg); }
-  .upgrade-orbit-5 { transform: rotate(300deg); }
-  .upgrade-orbit-1 .upgrade-traveler { transform: rotate(-60deg); }
-  .upgrade-orbit-2 .upgrade-traveler { transform: rotate(-120deg); }
-  .upgrade-orbit-3 .upgrade-traveler { transform: rotate(-180deg); }
-  .upgrade-orbit-4 .upgrade-traveler { transform: rotate(-240deg); }
-  .upgrade-orbit-5 .upgrade-traveler { transform: rotate(-300deg); }
+  .star-aura, .star-sparks, .spin-slow { animation: none; }
 }
