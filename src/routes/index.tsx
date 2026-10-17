@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { playBuy, playEvolve, playTap } from "@/lib/sounds";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -110,14 +111,30 @@ function Game() {
           <div className="text-5xl font-bold">{fmt(s.dust)}</div>
           <div className="text-muted-foreground">stardust · {fmt(cps)}/sec · +{fmt(perClick)}/tap</div>
         </div>
-        <button onClick={tap} aria-label="Tap the star" className="orb relative grid h-64 w-64 place-items-center text-[11rem] leading-none">
+        <div className="upgrade-play-area relative grid w-full max-w-96 place-items-center">
+          <div className="upgrade-travel-layer absolute inset-0" aria-label="Purchased upgrades">
+            {UPGRADES.map((u, index) => {
+              const owned = s.owned[u.id] ?? 0;
+              if (owned <= 0) return null;
+              return (
+                <div key={u.id} className={`upgrade-orbit upgrade-orbit-${index}`}>
+                  <span className="upgrade-traveler" role="img" aria-label={`${u.name}: ${owned} owned`}>
+                    <span className="upgrade-character">{u.icon}</span>
+                    <span className="upgrade-count">{owned}</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        <Button variant="ghost" onClick={tap} aria-label="Tap the star" className="orb relative z-10 grid h-64 w-64 shrink-0 place-items-center p-0 text-[11rem] leading-none hover:bg-transparent">
           <span className="spin-slow">{STARS[tier]?.emoji ?? "⭐"}</span>
           {floaters.map((f) => (
             <span key={f.id} className="floater absolute text-2xl font-bold text-primary" style={{ left: f.x, top: f.y }}>
               +{fmt(f.v)}
             </span>
           ))}
-        </button>
+        </Button>
+        </div>
         <div className="text-sm text-muted-foreground">
           {STARS[tier]?.name ?? "Star"}
           {tier < STARS.length - 1 && <> · {taps % 100}/100 to next star</>}

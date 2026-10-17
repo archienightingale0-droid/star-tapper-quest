@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Render purchased-upgrade characters from the existing saved ownership in a pointer-transparent CSS animation layer, so visuals never change game economy or intercept taps.

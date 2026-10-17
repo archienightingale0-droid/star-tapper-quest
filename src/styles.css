@@ -51,3 +51,58 @@
 .floater { animation: floatup 0.9s ease-out forwards; pointer-events: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin-slow { animation: spin 40s linear infinite; }
+
+.upgrade-play-area { aspect-ratio: 1; isolation: isolate; }
+.upgrade-travel-layer { pointer-events: none; }
+.upgrade-orbit {
+  position: absolute;
+  inset: 24px;
+  animation: upgrade-orbit 16s linear infinite;
+}
+.upgrade-traveler {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  display: grid;
+  place-items: center;
+  animation: upgrade-upright 16s linear infinite;
+}
+.upgrade-character { font-size: 32px; line-height: 1; }
+.upgrade-count {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  min-width: 20px;
+  padding: 1px 4px;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  text-align: center;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+}
+.upgrade-orbit-1, .upgrade-orbit-1 .upgrade-traveler { animation-delay: -3s; }
+.upgrade-orbit-2, .upgrade-orbit-2 .upgrade-traveler { animation-delay: -6s; }
+.upgrade-orbit-3, .upgrade-orbit-3 .upgrade-traveler { animation-delay: -9s; }
+.upgrade-orbit-4, .upgrade-orbit-4 .upgrade-traveler { animation-delay: -12s; }
+.upgrade-orbit-5, .upgrade-orbit-5 .upgrade-traveler { animation-delay: -14s; }
+@keyframes upgrade-orbit { to { transform: rotate(360deg); } }
+@keyframes upgrade-upright { to { transform: rotate(-360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .upgrade-orbit, .upgrade-traveler, .spin-slow { animation: none; }
+  .upgrade-orbit-1 { transform: rotate(60deg); }
+  .upgrade-orbit-2 { transform: rotate(120deg); }
+  .upgrade-orbit-3 { transform: rotate(180deg); }
+  .upgrade-orbit-4 { transform: rotate(240deg); }
+  .upgrade-orbit-5 { transform: rotate(300deg); }
+  .upgrade-orbit-1 .upgrade-traveler { transform: rotate(-60deg); }
+  .upgrade-orbit-2 .upgrade-traveler { transform: rotate(-120deg); }
+  .upgrade-orbit-3 .upgrade-traveler { transform: rotate(-180deg); }
+  .upgrade-orbit-4 .upgrade-traveler { transform: rotate(-240deg); }
+  .upgrade-orbit-5 .upgrade-traveler { transform: rotate(-300deg); }
+}
