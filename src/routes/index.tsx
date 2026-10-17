@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { playBuy, playEvolve, playTap } from "@/lib/sounds";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,19 +31,38 @@ const fmt = (n: number) =>
     : n < 1e6 ? (n / 1e3).toFixed(1) + "K"
     : n < 1e9 ? (n / 1e6).toFixed(2) + "M" : (n / 1e9).toFixed(2) + "B";
 
-type Save = { dust: number; owned: Record<string, number> };
+const STARS = [
+  { emoji: "⭐", name: "Star" },
+  { emoji: "🌟", name: "Glowing Star" },
+  { emoji: "✨", name: "Sparkle Star" },
+  { emoji: "💫", name: "Dizzy Star" },
+  { emoji: "🌠", name: "Shooting Star" },
+  { emoji: "☄️", name: "Comet" },
+  { emoji: "☀️", name: "Sun" },
+  { emoji: "🪐", name: "Ringed Planet" },
+  { emoji: "🌌", name: "Galaxy" },
+  { emoji: "🕳️", name: "Black Hole" },
+];
+const starTier = (taps: number) => Math.min(Math.floor(taps / 100), STARS.length - 1);
+
+type Save = { dust: number; owned: Record<string, number>; taps: number };
 const KEY = "star-tapper-save";
 
 function Game() {
-  const [s, setS] = useState<Save>({ dust: 0, owned: {} });
+  const [s, setS] = useState<Save>({ dust: 0, owned: {}, taps: 0 });
   const [floaters, setFloaters] = useState<{ id: number; x: number; y: number; v: number }[]>([]);
+  const [newStar, setNewStar] = useState<string | null>(null);
   const loaded = useRef(false);
+  const tapPitch = useRef(0);
+  const pitchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const perClick = 1 + UPGRADES.reduce((a, u) => a + u.click * (s.owned[u.id] ?? 0), 0);
   const cps = UPGRADES.reduce((a, u) => a + u.cps * (s.owned[u.id] ?? 0), 0);
+  const taps = s.taps ?? 0;
+  const tier = starTier(taps);
 
   useEffect(() => {
-    try { const r = localStorage.getItem(KEY); if (r) setS(JSON.parse(r)); } catch {}
+    try { const r = localStorage.getItem(KEY); if (r) setS({ dust: 0, owned: {}, taps: 0, ...JSON.parse(r) }); } catch {}
     loaded.current = true;
   }, []);
   useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(s)); }, [s]);
@@ -50,18 +70,36 @@ function Game() {
     const t = setInterval(() => setS((p) => ({ ...p, dust: p.dust + cps / 10 })), 100);
     return () => clearInterval(t);
   }, [cps]);
+  const prevTier = useRef(0);
+  useEffect(() => {
+    const t = starTier(taps);
+    if (t > prevTier.current) {
+      const name = STARS[t]?.name;
+      if (name) {
+        setNewStar(name);
+        playEvolve();
+        setTimeout(() => setNewStar(null), 4000);
+      }
+    }
+    prevTier.current = t;
+  }, [taps]);
 
   const tap = (e: React.MouseEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const id = Date.now() + Math.random();
     setFloaters((f) => [...f.slice(-20), { id, x: e.clientX - r.left, y: e.clientY - r.top, v: perClick }]);
     setTimeout(() => setFloaters((f) => f.filter((x) => x.id !== id)), 900);
-    setS((p) => ({ ...p, dust: p.dust + perClick }));
+    setS((p) => ({ ...p, dust: p.dust + perClick, taps: (p.taps ?? 0) + 1 }));
+    playTap(tapPitch.current);
+    if (pitchTimer.current) clearTimeout(pitchTimer.current);
+    tapPitch.current = Math.min(tapPitch.current + 1, 8);
+    pitchTimer.current = setTimeout(() => (tapPitch.current = 0), 1200);
   };
   const buy = (u: Upgrade) => {
     const n = s.owned[u.id] ?? 0, c = cost(u, n);
     if (s.dust < c) return;
-    setS((p) => ({ dust: p.dust - c, owned: { ...p.owned, [u.id]: n + 1 } }));
+    setS((p) => ({ dust: p.dust - c, taps: p.taps ?? 0, owned: { ...p.owned, [u.id]: n + 1 } }));
+    playBuy(UPGRADES.findIndex((x) => x.id === u.id));
   };
 
   return (
@@ -73,14 +111,19 @@ function Game() {
           <div className="text-muted-foreground">stardust · {fmt(cps)}/sec · +{fmt(perClick)}/tap</div>
         </div>
         <button onClick={tap} aria-label="Tap the star" className="orb relative grid h-64 w-64 place-items-center text-[11rem] leading-none">
-          <span className="spin-slow">⭐</span>
+          <span className="spin-slow">{STARS[tier]?.emoji ?? "⭐"}</span>
           {floaters.map((f) => (
             <span key={f.id} className="floater absolute text-2xl font-bold text-primary" style={{ left: f.x, top: f.y }}>
               +{fmt(f.v)}
             </span>
           ))}
         </button>
-        <button onClick={() => confirm("Reset all progress?") && setS({ dust: 0, owned: {} })} className="text-sm text-muted-foreground underline">
+        <div className="text-sm text-muted-foreground">
+          {STARS[tier]?.name ?? "Star"}
+          {tier < STARS.length - 1 && <> · {taps % 100}/100 to next star</>}
+        </div>
+        {newStar && <div className="text-lg font-bold text-accent">✨ Evolved into a {newStar}!</div>}
+        <button onClick={() => confirm("Reset all progress?") && setS({ dust: 0, owned: {}, taps: 0 })} className="text-sm text-muted-foreground underline">
           Reset
         </button>
       </section>
