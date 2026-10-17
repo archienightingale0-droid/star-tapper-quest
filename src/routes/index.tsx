@@ -81,9 +81,9 @@ function Game() {
     if (pitchTimer.current) clearTimeout(pitchTimer.current);
     tapPitch.current = Math.min(tapPitch.current + 1, 8);
     pitchTimer.current = setTimeout(() => (tapPitch.current = 0), 1200);
-    if (starTier((s.taps ?? 0) + 1) > starTier(s.taps ?? 0)) {
-      const name = STARS[starTier((s.taps ?? 0) + 1)].name;
-      setNewStar(name);
+    const next = STARS[starTier((s.taps ?? 0) + 1)];
+    if (next) {
+      setNewStar(next.name);
       playEvolve();
       setTimeout(() => setNewStar(null), 4000);
     }
@@ -91,7 +91,7 @@ function Game() {
   const buy = (u: Upgrade) => {
     const n = s.owned[u.id] ?? 0, c = cost(u, n);
     if (s.dust < c) return;
-    setS((p) => ({ dust: p.dust - c, owned: { ...p.owned, [u.id]: n + 1 } }));
+    setS((p) => ({ dust: p.dust - c, taps: p.taps ?? 0, owned: { ...p.owned, [u.id]: n + 1 } }));
     playBuy(UPGRADES.findIndex((x) => x.id === u.id));
   };
 
@@ -104,7 +104,7 @@ function Game() {
           <div className="text-muted-foreground">stardust · {fmt(cps)}/sec · +{fmt(perClick)}/tap</div>
         </div>
         <button onClick={tap} aria-label="Tap the star" className="orb relative grid h-64 w-64 place-items-center text-[11rem] leading-none">
-          <span className="spin-slow">{STARS[tier].emoji}</span>
+          <span className="spin-slow">{STARS[tier]?.emoji ?? "⭐"}</span>
           {floaters.map((f) => (
             <span key={f.id} className="floater absolute text-2xl font-bold text-primary" style={{ left: f.x, top: f.y }}>
               +{fmt(f.v)}
@@ -112,7 +112,7 @@ function Game() {
           ))}
         </button>
         <div className="text-sm text-muted-foreground">
-          {STARS[tier].name}
+          {STARS[tier]?.name ?? "Star"}
           {tier < STARS.length - 1 && <> · {taps % 100}/100 to next star</>}
         </div>
         {newStar && <div className="text-lg font-bold text-accent">✨ Evolved into a {newStar}!</div>}
