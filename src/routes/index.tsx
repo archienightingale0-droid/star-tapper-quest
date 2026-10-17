@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { playBuy, playTap } from "@/lib/sounds";
+import { playBuy, playEvolve, playTap } from "@/lib/sounds";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -58,6 +58,8 @@ function Game() {
 
   const perClick = 1 + UPGRADES.reduce((a, u) => a + u.click * (s.owned[u.id] ?? 0), 0);
   const cps = UPGRADES.reduce((a, u) => a + u.cps * (s.owned[u.id] ?? 0), 0);
+  const taps = s.taps ?? 0;
+  const tier = starTier(taps);
 
   useEffect(() => {
     try { const r = localStorage.getItem(KEY); if (r) setS({ dust: 0, owned: {}, taps: 0, ...JSON.parse(r) }); } catch {}
@@ -74,11 +76,17 @@ function Game() {
     const id = Date.now() + Math.random();
     setFloaters((f) => [...f.slice(-20), { id, x: e.clientX - r.left, y: e.clientY - r.top, v: perClick }]);
     setTimeout(() => setFloaters((f) => f.filter((x) => x.id !== id)), 900);
-    setS((p) => ({ ...p, dust: p.dust + perClick }));
+    setS((p) => ({ ...p, dust: p.dust + perClick, taps: (p.taps ?? 0) + 1 }));
     playTap(tapPitch.current);
     if (pitchTimer.current) clearTimeout(pitchTimer.current);
     tapPitch.current = Math.min(tapPitch.current + 1, 8);
     pitchTimer.current = setTimeout(() => (tapPitch.current = 0), 1200);
+    if (starTier((s.taps ?? 0) + 1) > starTier(s.taps ?? 0)) {
+      const name = STARS[starTier((s.taps ?? 0) + 1)].name;
+      setNewStar(name);
+      playEvolve();
+      setTimeout(() => setNewStar(null), 4000);
+    }
   };
   const buy = (u: Upgrade) => {
     const n = s.owned[u.id] ?? 0, c = cost(u, n);
