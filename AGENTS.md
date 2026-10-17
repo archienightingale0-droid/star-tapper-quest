@@ -9,4 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Render purchased-upgrade characters from the existing saved ownership in a pointer-transparent CSS animation layer, so visuals never change game economy or intercept taps.
+- Purchased upgrades render as a pointer-transparent glow/sparkle effect layer around the star (aura opacity scales with total upgrades owned), so visuals never change game economy or intercept taps.
