@@ -70,6 +70,18 @@ function Game() {
     const t = setInterval(() => setS((p) => ({ ...p, dust: p.dust + cps / 10 })), 100);
     return () => clearInterval(t);
   }, [cps]);
+  const prevTier = useRef(0);
+  useEffect(() => {
+    const t = starTier(taps);
+    if (t > prevTier.current) {
+      const name = STARS[t]?.name;
+      if (name) {
+        setNewStar(name);
+        playEvolve();
+      }
+    }
+    prevTier.current = t;
+  }, [taps]);
 
   const tap = (e: React.MouseEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -81,12 +93,6 @@ function Game() {
     if (pitchTimer.current) clearTimeout(pitchTimer.current);
     tapPitch.current = Math.min(tapPitch.current + 1, 8);
     pitchTimer.current = setTimeout(() => (tapPitch.current = 0), 1200);
-    const next = STARS[starTier((s.taps ?? 0) + 1)];
-    if (next) {
-      setNewStar(next.name);
-      playEvolve();
-      setTimeout(() => setNewStar(null), 4000);
-    }
   };
   const buy = (u: Upgrade) => {
     const n = s.owned[u.id] ?? 0, c = cost(u, n);
