@@ -59,6 +59,7 @@ function Game() {
 
   const perClick = 1 + UPGRADES.reduce((a, u) => a + u.click * (s.owned[u.id] ?? 0), 0);
   const cps = UPGRADES.reduce((a, u) => a + u.cps * (s.owned[u.id] ?? 0), 0);
+  const totalOwned = UPGRADES.reduce((a, u) => a + (s.owned[u.id] ?? 0), 0);
   const taps = s.taps ?? 0;
   const tier = starTier(taps);
 
@@ -112,20 +113,22 @@ function Game() {
           <div className="text-muted-foreground">stardust · {fmt(cps)}/sec · +{fmt(perClick)}/tap</div>
         </div>
         <div className="upgrade-play-area relative grid w-full max-w-96 place-items-center">
-          <div className="upgrade-travel-layer absolute inset-0" aria-label="Purchased upgrades">
-            {UPGRADES.map((u, index) => {
-              const owned = s.owned[u.id] ?? 0;
-              if (owned <= 0) return null;
-              return (
-                <div key={u.id} className={`upgrade-orbit upgrade-orbit-${index}`}>
-                  <span className="upgrade-traveler" role="img" aria-label={`${u.name}: ${owned} owned`}>
-                    <span className="upgrade-character">{u.icon}</span>
-                    <span className="upgrade-count">{owned}</span>
+          {totalOwned > 0 && (
+            <div
+              className="star-effect-layer absolute inset-0"
+              style={{ "--aura-o": Math.min(0.3 + totalOwned * 0.08, 1) } as React.CSSProperties}
+              aria-label="Upgrade power effect"
+            >
+              <div className="star-aura" />
+              <div className="star-sparks">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <span key={i} style={{ transform: `rotate(${i * 60}deg) translateY(-150px)` }}>
+                    ✦
                   </span>
-                </div>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+            </div>
+          )}
         <Button variant="ghost" onClick={tap} aria-label="Tap the star" className="orb relative z-10 grid h-64 w-64 shrink-0 place-items-center p-0 text-[11rem] leading-none hover:bg-transparent">
           <span className="spin-slow">{STARS[tier]?.emoji ?? "⭐"}</span>
           {floaters.map((f) => (
