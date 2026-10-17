@@ -1,24 +1,108 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Star Tapper — Idle Clicker Game" },
+      { name: "description", content: "Tap the star, collect stardust, and build a galactic empire in this idle clicker." },
+      { property: "og:title", content: "Star Tapper — Idle Clicker Game" },
+      { property: "og:description", content: "Tap the star, collect stardust, and build a galactic empire." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: Game,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+type Upgrade = { id: string; name: string; icon: string; base: number; cps: number; click: number };
+const UPGRADES: Upgrade[] = [
+  { id: "glove", name: "Cosmic Glove", icon: "🧤", base: 15, cps: 0, click: 1 },
+  { id: "drone", name: "Dust Drone", icon: "🛸", base: 50, cps: 1, click: 0 },
+  { id: "moon", name: "Moon Mine", icon: "🌙", base: 400, cps: 8, click: 0 },
+  { id: "rocket", name: "Rocket Fleet", icon: "🚀", base: 3000, cps: 50, click: 0 },
+  { id: "planet", name: "Planet Factory", icon: "🪐", base: 25000, cps: 300, click: 0 },
+  { id: "galaxy", name: "Galaxy Engine", icon: "🌌", base: 250000, cps: 2000, click: 0 },
+];
+const cost = (u: Upgrade, n: number) => Math.ceil(u.base * Math.pow(1.15, n));
+const fmt = (n: number) =>
+  n < 1000 ? Math.floor(n).toString()
+    : n < 1e6 ? (n / 1e3).toFixed(1) + "K"
+    : n < 1e9 ? (n / 1e6).toFixed(2) + "M" : (n / 1e9).toFixed(2) + "B";
+
+type Save = { dust: number; owned: Record<string, number> };
+const KEY = "star-tapper-save";
+
+function Game() {
+  const [s, setS] = useState<Save>({ dust: 0, owned: {} });
+  const [floaters, setFloaters] = useState<{ id: number; x: number; y: number; v: number }[]>([]);
+  const loaded = useRef(false);
+
+  const perClick = 1 + UPGRADES.reduce((a, u) => a + u.click * (s.owned[u.id] ?? 0), 0);
+  const cps = UPGRADES.reduce((a, u) => a + u.cps * (s.owned[u.id] ?? 0), 0);
+
+  useEffect(() => {
+    try { const r = localStorage.getItem(KEY); if (r) setS(JSON.parse(r)); } catch {}
+    loaded.current = true;
+  }, []);
+  useEffect(() => { if (loaded.current) localStorage.setItem(KEY, JSON.stringify(s)); }, [s]);
+  useEffect(() => {
+    const t = setInterval(() => setS((p) => ({ ...p, dust: p.dust + cps / 10 })), 100);
+    return () => clearInterval(t);
+  }, [cps]);
+
+  const tap = (e: React.MouseEvent) => {
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const id = Date.now() + Math.random();
+    setFloaters((f) => [...f.slice(-20), { id, x: e.clientX - r.left, y: e.clientY - r.top, v: perClick }]);
+    setTimeout(() => setFloaters((f) => f.filter((x) => x.id !== id)), 900);
+    setS((p) => ({ ...p, dust: p.dust + perClick }));
+  };
+  const buy = (u: Upgrade) => {
+    const n = s.owned[u.id] ?? 0, c = cost(u, n);
+    if (s.dust < c) return;
+    setS((p) => ({ dust: p.dust - c, owned: { ...p.owned, [u.id]: n + 1 } }));
+  };
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 p-4 md:flex-row md:items-center">
+      <section className="flex flex-1 flex-col items-center gap-4">
+        <h1 className="text-4xl font-bold text-primary">Star Tapper</h1>
+        <div className="text-center">
+          <div className="text-5xl font-bold">{fmt(s.dust)}</div>
+          <div className="text-muted-foreground">stardust · {fmt(cps)}/sec · +{fmt(perClick)}/tap</div>
+        </div>
+        <button onClick={tap} aria-label="Tap the star" className="orb relative grid h-64 w-64 place-items-center text-[11rem] leading-none">
+          <span className="spin-slow">⭐</span>
+          {floaters.map((f) => (
+            <span key={f.id} className="floater absolute text-2xl font-bold text-primary" style={{ left: f.x, top: f.y }}>
+              +{fmt(f.v)}
+            </span>
+          ))}
+        </button>
+        <button onClick={() => confirm("Reset all progress?") && setS({ dust: 0, owned: {} })} className="text-sm text-muted-foreground underline">
+          Reset
+        </button>
+      </section>
+      <aside className="flex w-full flex-col gap-2 md:w-80">
+        <h2 className="text-xl font-semibold">Upgrades</h2>
+        {UPGRADES.map((u) => {
+          const n = s.owned[u.id] ?? 0, c = cost(u, n), ok = s.dust >= c;
+          return (
+            <button key={u.id} onClick={() => buy(u)} disabled={!ok}
+              className="flex items-center gap-3 rounded-lg border bg-card p-3 text-left transition enabled:hover:border-primary disabled:opacity-50">
+              <span className="text-3xl">{u.icon}</span>
+              <span className="flex-1">
+                <span className="block font-semibold">{u.name}</span>
+                <span className="block text-sm text-muted-foreground">
+                  {u.click ? `+${u.click}/tap` : `+${u.cps}/sec`} · 💫 {fmt(c)}
+                </span>
+              </span>
+              <span className="text-2xl font-bold text-accent">{n}</span>
+            </button>
+          );
+        })}
+      </aside>
+    </main>
   );
 }
